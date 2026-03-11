@@ -77,77 +77,41 @@ def assignment_tracker():
 
 #Get All Submission
 def course_submissions(course_id):
-    """Fetch all submissions for a student in a course and display grades with total and GPA estimate."""
-
     headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
 
-    # Step 1: Get all assignments
-    assignments_url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/assignments"
-    assignments_resp = requests.get(assignments_url, headers=headers)
-    if assignments_resp.status_code != 200:
-        print(f"Failed to retrieve assignments: {assignments_resp.status_code}")
+    url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/students/submissions?student_ids[]=self&include[]=assignment"
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"Failed to retrieve submissions: {response.status_code}")
         return
 
-    assignments = assignments_resp.json()
+    submissions = response.json()
 
     total_score = 0
     total_points = 0
 
-    print(f"\nGrades for Course ID {course_id}:\n{'Assignment':<50} {'Score':<10} {'Grade':<10}")
+    print(f"\nGrades for Course ID {course_id}")
+    print(f"{'Assignment':<50} {'Score':<10} {'Grade':<10}")
     print("-" * 75)
 
-    for assignment in assignments:
-        assignment_id = assignment['id']
-        assignment_name = assignment['name']
-        points_possible = assignment.get('points_possible', 0)
+    for sub in submissions:
+        assignment = sub.get("assignment", {})
+        name = assignment.get("name", "Unknown")
+        points_possible = assignment.get("points_possible", 0)
 
-        # Step 2: Get this student's submission
-        submissions_url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions?student_ids[]=self"
-        submission_resp = requests.get(submissions_url, headers=headers)
+        score = sub.get("score") or 0
+        grade = sub.get("grade") or "N/A"
 
-        if submission_resp.status_code != 200:
-            print(f"Failed to retrieve submission for {assignment_name}")
-            continue
+        # if score is None:
+        #     score = 0
 
-        submission = submission_resp.json()[0]
-        score = submission.get('score', 0)
-        grade = submission.get('grade', 'N/A')
+        print(f"{name:<50} {score:<10} {grade:<10}")
 
-        print(f"{assignment_name:<50} {score:<10} {grade:<10}")
+        total_score += score
+        total_points += points_possible
 
-        # Accumulate for course total
-        if score is not None:
-            total_score += score
-            total_points += points_possible
+    percentage = (total_score / total_points * 100) if total_points > 0 else 0
 
-    # Step 3: Calculate course percentage
-    course_percentage = (total_score / total_points) * 100 if total_points > 0 else 0
-
-    # Step 4: Convert to estimated GPA (using common 4.0 scale)
-    if course_percentage >= 93:
-        gpa = 4.0
-    elif course_percentage >= 90:
-        gpa = 3.7
-    elif course_percentage >= 87:
-        gpa = 3.3
-    elif course_percentage >= 83:
-        gpa = 3.0
-    elif course_percentage >= 80:
-        gpa = 2.7
-    elif course_percentage >= 77:
-        gpa = 2.3
-    elif course_percentage >= 73:
-        gpa = 2.0
-    elif course_percentage >= 70:
-        gpa = 1.7
-    elif course_percentage >= 67:
-        gpa = 1.3
-    elif course_percentage >= 63:
-        gpa = 1.0
-    elif course_percentage >= 60:
-        gpa = 0.7
-    else:
-        gpa = 0.0
-
-    print("\n" + "-" * 75)
-    print(f"Total Score: {total_score}/{total_points}  |  Percentage: {course_percentage:.2f}%  |  Estimated GPA: {gpa:.2f}")
+    print("-" * 75)
+    print(f"Total Score: {total_score}/{total_points} | Percentage: {percentage:.2f}%")
