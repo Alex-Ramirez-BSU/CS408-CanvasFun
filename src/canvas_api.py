@@ -12,6 +12,13 @@ USER_ID = "232391"
 #API URL
 # URL = "https://boisestatecanvas.instructure.com/api/v1/..."
 
+#Get/Display Raw Data
+def get_raw_data():
+    courses = get_all_active_courses()
+
+    for course in courses:
+        print(course)
+
 #Get All Upcoming Assignments
 def assignment_tracker():
     pass
@@ -29,9 +36,7 @@ def get_all_active_courses():
     data = response.json()
 
     for course in data:
-        course_name = course.get("name")
         course_term = course.get("enrollment_term_id")
-
         # Only return courses for term 223 (Spring 2026)
         if course_term == 223:
             courses.append(course)
@@ -52,4 +57,17 @@ def get_single_course(course_id):
         print(f"Failed to retrieve data: {response.status_code}, {response.text[:50]}")
 
     course = response.json()
-    print(course)
+    return course
+
+def print_course(course):
+
+    if not course:
+        print(f"Failed to retrieve data: {course}")
+        return
+
+    print(f"Course Name: {course.get('name')}")
+    print(f"Course Code: {course.get('course_code')}")
+    print(f"Course ID: {course.get('id')}")
+    print(f"Term ID: {course.get('enrollment_term_id')}")
+    print(f"Start Date: {course.get('start_at')}")
+    print(f"End Date: {course.get('end_at')}")
