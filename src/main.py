@@ -5,7 +5,7 @@ def canvas_menu():
     print("----------Welcome to Canvas Menu----------")
     print("1. Display all current classes")
     print("2. Display information about a specific class")
-    print("3. Display all current grades")
+    print("3. Display all grades for a specific class")
     print("4. Display upcoming assignments")
     print("------------------------------------------")
 
@@ -56,8 +56,17 @@ def main():
             class_choice = course_menu(courses)
             info = canvas.get_single_course(class_choice)
             canvas.print_course(info)
+        case 3:
+        # List courses first so the user can select
+            courses = canvas.get_all_active_courses()
+            for i, course in enumerate(courses, start=1):
+                print(f"{i}. {course['name']}")
+            course_num = int(input("Select a course number to view grades: "))
+            course_id = courses[course_num-1]['id']
+            canvas.course_submissions(course_id)
+
         case _:
-            print("Invalid choice, please try again.")
+            print("Option Not Available")
 
 
 
