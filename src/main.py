@@ -44,29 +44,38 @@ def main():
     # Retrieving MetaData
     courses = canvas.get_all_active_courses()
 
-    #Get User Input
-    user_choice = canvas_menu()
+    while 1:
+        #Get User Input
+        user_choice = canvas_menu()
 
-    match user_choice:
-        case 1:
-            print("-----Displaying all current classes-----")
-            canvas.print_all_active_courses(courses)
-        case 2:
-            print("-----Displaying information about a specific class-----")
-            class_choice = course_menu(courses)
-            info = canvas.get_single_course(class_choice)
-            canvas.print_course(info)
-        case 3:
-            courses = canvas.get_all_active_courses()
-            for i, course in enumerate(courses, start=1):
-                print(f"{i}. {course['name']}")
-            course_num = int(input("Select a course number to view grades: "))
-            course_id = courses[course_num-1]['id']
-            canvas.course_submissions(course_id)
-        case 4:
-            print("-----Displaying upcoming assignments-----")
-        case _:
-            print("Option Not Available")
+        match user_choice:
+            case 1:
+                print("---------- Displaying all current classes ----------")
+                canvas.print_all_active_courses(courses)
+            case 2:
+                print("---------- Displaying information about a specific class ----------")
+                class_choice = course_menu(courses)
+                info = canvas.get_single_course(class_choice)
+                canvas.print_course(info)
+            case 3:
+                courses = canvas.get_all_active_courses()
+                for i, course in enumerate(courses, start=1):
+                    print(f"{i}. {course['name']}")
+                course_num = int(input("Select a course number to view grades: "))
+                course_id = courses[course_num-1]['id']
+                canvas.course_submissions(course_id)
+            case 4:
+                print("---------- Displaying upcoming assignments ----------")
+            case _:
+                print("Option Not Available")
+
+        print("Continue? [y/n]")
+        choice = input("Enter your choice: ")
+        while choice.lower() != "y" and choice.lower() != "n":
+            choice = input("Invalid choice, please try again: ")
+        if choice.lower() == "n":
+            break
+        continue
 
 
 
