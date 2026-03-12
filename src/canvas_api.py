@@ -10,6 +10,7 @@ load_dotenv()
 CANVAS_API_TOKEN = os.getenv("CANVAS_API_TOKEN")
 if not CANVAS_API_TOKEN:
     raise ValueError("CANVAS_API_TOKEN must be set")
+headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
 
 # USER_ID = "232391"
 
@@ -28,7 +29,7 @@ def get_all_active_courses():
     url = "https://boisestatecanvas.instructure.com/api/v1/users/self/courses?enrollment_state=active"
     courses = []
 
-    response = requests.get(url, headers={"Authorization": f"Bearer {CANVAS_API_TOKEN}"})
+    response = requests.get(url, headers=headers)
     if response.status_code != 200:
         print(f"Failed to retrieve data: {response.status_code}, {response.text[:50]}")
         return courses
@@ -51,7 +52,7 @@ def print_all_active_courses(courses):
 def get_single_course(course_id):
     course_url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}"
 
-    response = requests.get(course_url, headers={"Authorization": f"Bearer {CANVAS_API_TOKEN}"})
+    response = requests.get(course_url, headers=headers)
 
     if response.status_code != 200:
         print(f"Failed to retrieve data: {response.status_code}, {response.text[:50]}")
@@ -74,7 +75,6 @@ def print_course(course):
 
 #Get All Submission
 def course_submissions(course_id):
-    headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
     COL_WIDTH = 40
 
     url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/students/submissions?student_ids[]=self&include[]=assignment"
@@ -186,7 +186,7 @@ def todo():
 
     print(today)
 
-    response = requests.get(url, headers={"Authorization": f"Bearer {CANVAS_API_TOKEN}"})
+    response = requests.get(url, headers=headers)
     if response.status_code != 200:
         print(f"Failed to retrieve submissions: {response.status_code}")
         return
