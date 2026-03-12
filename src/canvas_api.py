@@ -71,13 +71,10 @@ def print_course(course):
     print(f"Start Date: {course.get('start_at')}")
     print(f"End Date: {course.get('end_at')}")
 
-#Get All Upcoming Assignments
-def assignment_tracker():
-    pass
-
 #Get All Submission
 def course_submissions(course_id):
     headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
+    COL_WIDTH = 40
 
     url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/students/submissions?student_ids[]=self&include[]=assignment"
 
@@ -92,26 +89,35 @@ def course_submissions(course_id):
     total_points = 0
 
     print(f"\nGrades for Course ID {course_id}")
-    print(f"{'Assignment':<50} {'Score':<10} {'Grade':<10}")
-    print("-" * 75)
+    print(f"{'Assignment':<40} {'Score':>8} {'Possible':>10} {'Grade':>10}")
+    print("-" * 70)
 
     for sub in submissions:
         assignment = sub.get("assignment", {})
+
         name = assignment.get("name", "Unknown")
+        if len(name) > COL_WIDTH:
+            name = name[:COL_WIDTH - 3] + "..."
+
         points_possible = assignment.get("points_possible", 0)
 
-        score = sub.get("score") or 0
+        score = sub.get("score")
         grade = sub.get("grade") or "N/A"
 
-        # if score is None:
-        #     score = 0
+        if score is None:
+            score = 0
 
-        print(f"{name:<50} {score:<10} {grade:<10}")
+        print(f"{name:<40} {score:>8} {points_possible:>10} {grade:>10}")
 
-        total_score += score
-        total_points += points_possible
+        if sub.get("workflow_state") == "graded":
+            total_score += score
+            total_points += points_possible
 
     percentage = (total_score / total_points * 100) if total_points > 0 else 0
 
     print("-" * 75)
     print(f"Total Score: {total_score}/{total_points} | Percentage: {percentage:.2f}%")
+
+#Get All Upcoming Assignments
+def assignment_tracker():
+    pass
