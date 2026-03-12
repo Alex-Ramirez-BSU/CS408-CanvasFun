@@ -1,7 +1,16 @@
 import os
 import requests
 from dotenv import load_dotenv
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
+
+# ANSI color codes
+RESET = "\033[0m"
+BOLD = "\033[1m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+CYAN = "\033[36m"
+DARK_GREEN = "\033[38;5;28m"
 
 #Load Dot Env File
 load_dotenv()
@@ -10,12 +19,12 @@ load_dotenv()
 CANVAS_API_TOKEN = os.getenv("CANVAS_API_TOKEN")
 if not CANVAS_API_TOKEN:
     raise ValueError("CANVAS_API_TOKEN must be set")
+
+CANVAS_BASE_URL = os.getenv("CANVAS_BASE_URL")
+if not CANVAS_BASE_URL:
+    raise ValueError("CANVAS_BASE_URL must be set")
+
 headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
-
-# USER_ID = "232391"
-
-#API URL
-# URL = "https://boisestatecanvas.instructure.com/api/v1/..."
 
 #Get/Display Raw Data
 def get_raw_data():
@@ -24,17 +33,11 @@ def get_raw_data():
     for course in courses:
         print(course)
 
+
 #Get All Current Courses
 def get_all_active_courses():
-    url = "https://boisestatecanvas.instructure.com/api/v1/users/self/courses?enrollment_state=active"
+    data = canvas_endpoint("/api/v1/users/self/courses?enrollment_state=active")
     courses = []
-
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print(f"Failed to retrieve data: {response.status_code}, {response.text[:50]}")
-        return courses
-
-    data = response.json()
 
     for course in data:
         course_term = course.get("enrollment_term_id")
@@ -44,61 +47,54 @@ def get_all_active_courses():
 
     return courses
 
+
 #Print All Current Courses
 def print_all_active_courses(courses):
+    print(f"{BOLD}---------- Displaying all current courses ----------{RESET}")
     for course in courses:
         print(course['name'])
+    print(f"{BOLD}-{RESET}" * 52)
+
 
 def get_single_course(course_id):
-    course_url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}"
-
-    response = requests.get(course_url, headers=headers)
-
-    if response.status_code != 200:
-        print(f"Failed to retrieve data: {response.status_code}, {response.text[:50]}")
-
-    course = response.json()
+    course = canvas_endpoint(f"/api/v1/courses/{course_id}")
     return course
 
-def print_course(course):
 
+def print_course(course):
+    print(f"{BOLD}---------- Displaying information about a specific class ----------{RESET}")
     if not course:
         print(f"Failed to retrieve data: {course}")
         return
 
-    print(f"Course Name: {course.get('name')}")
-    print(f"Course Code: {course.get('course_code')}")
-    print(f"Course ID: {course.get('id')}")
-    print(f"Term ID: {course.get('enrollment_term_id')}")
-    print(f"Start Date: {course.get('start_at')}")
-    print(f"End Date: {course.get('end_at')}")
+    print(f"{BOLD}Course Name:{RESET} {course.get('name')}")
+    print(f"{BOLD}Course Code:{RESET} {course.get('course_code')}")
+    print(f"{BOLD}Course ID:{RESET} {course.get('id')}")
+    print(f"{BOLD}Term ID:{RESET} {course.get('enrollment_term_id')}")
+    print(f"{BOLD}Start Date:{RESET} {course.get('start_at')}")
+    print(f"{BOLD}End Date:{RESET} {course.get('end_at')}")
+    print(f"{BOLD}-{RESET}" * 67)
+
 
 #Get All Submission
 def course_submissions(course_id):
-    COL_WIDTH = 40
+    col_width = 40
 
-    url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/students/submissions?student_ids[]=self&include[]=assignment"
-
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print(f"Failed to retrieve submissions: {response.status_code}")
-        return
-
-    submissions = response.json()
+    submissions = canvas_endpoint(f"/api/v1/courses/{course_id}/students/submissions?student_ids[]=self&include[]=assignment")
 
     total_score = 0
     total_points = 0
 
     print(f"\nGrades for Course ID {course_id}")
-    print(f"{'Assignment':<40} {'Score':>8} {'Possible':>10} {'Grade':>10}")
+    print(f"{BOLD}{'Assignment':<40} {'Score':>8} {'Possible':>10} {'Grade':>10}{RESET}")
     print("-" * 70)
 
     for sub in submissions:
         assignment = sub.get("assignment", {})
 
         name = assignment.get("name", "Unknown")
-        if len(name) > COL_WIDTH:
-            name = name[:COL_WIDTH - 3] + "..."
+        if len(name) > col_width:
+            name = name[:col_width - 3] + "..."
 
         points_possible = assignment.get("points_possible", 0)
 
@@ -117,94 +113,94 @@ def course_submissions(course_id):
     percentage = (total_score / total_points * 100) if total_points > 0 else 0
 
     print("-" * 75)
-    print(f"Total Score: {total_score}/{total_points} | Percentage: {percentage:.2f}%")
+    print(f"{BOLD}Total Score: {total_score}/{total_points} | Percentage: {percentage:.2f}%{RESET}")
 
-#Get All Upcoming Assignments
-# def assignment_tracker(courses):
-#     headers = {"Authorization": f"Bearer {CANVAS_API_TOKEN}"}
-#
-#     now = datetime.now(timezone.utc)
-#     today = now.date()
-#     week_ahead = (now + timedelta(days=7)).date()
-#
-#     assignments_list = []
-#
-#     for course in courses:
-#         course_id = course['id']
-#         url = f"https://boisestatecanvas.instructure.com/api/v1/courses/{course_id}/assignments"
-#
-#         resp = requests.get(url, headers=headers)
-#         if resp.status_code != 200:
-#             continue
-#
-#         assignments = resp.json()
-#
-#         for assignment in assignments:
-#             print(assignment["name"], assignment["due_at"])
-#
-#         for assignment in assignments:
-#             due = assignment.get("due_at")
-#             if not due:
-#                 continue
-#
-#             due_dt = datetime.fromisoformat(due.replace("Z", "+00:00"))
-#
-#             if today <= due_dt.date() <= week_ahead:
-#                 days_left = (due_dt.date() - today).days
-#
-#                 if days_left == 0:
-#                     due_in = "Today"
-#                 elif days_left == 1:
-#                     due_in = "Tomorrow"
-#                 else:
-#                     due_in = f"{days_left} days"
-#
-#                 assignments_list.append({
-#                     "due": due_dt,
-#                     "due_in": due_in,
-#                     "course": course["name"],
-#                     "name": assignment["name"],
-#                     "points": assignment.get("points_possible", 0)
-#                 })
-#
-#     assignments_list.sort(key=lambda x: x["due"])
-#
-#     print("\nUpcoming Assignments (next 7 days):")
-#     print(f"{'Due In':<10} {'Course':<40} {'Assignment':<40} {'Points':>6}")
-#     print("-" * 100)
-#
-#     for a in assignments_list:
-#         course = a["course"][:37] + "..." if len(a["course"]) > 40 else a["course"]
-#         name = a["name"][:37] + "..." if len(a["name"]) > 40 else a["name"]
-#
-#         print(f"{a['due_in']:<10} {course:<40} {name:<40} {a['points']:>6}")
 
 def todo():
-    url = f"https://boisestatecanvas.instructure.com/api/v1/users/self/todo"
-
     today = datetime.today()
+    overdue = []
+    upcoming = []
 
-    print(today)
-
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print(f"Failed to retrieve submissions: {response.status_code}")
-        return
-
-    assignments = response.json()
+    assignments = canvas_endpoint("/api/v1/users/self/todo")
 
     for item in assignments:
         assignment = item['assignment']
+        course_name = item.get('context_name', 'Unknown Course')
+        if " - " in course_name:
+            course_name = course_name.split(" - ", 1)[1]  # keeps everything after the first " - "
         name = assignment['name']
+        points = assignment['points_possible']
         due_date = datetime.strptime(assignment['due_at'][:10], "%Y-%m-%d")
         due_in_days = (due_date - today).days
 
-        if due_in_days == 0:
-            status = "DUE TODAY"
-        elif due_in_days > 0:
-            status = "UPCOMING"
-        else:
-            status = "OVERDUE"
+        entry = {
+            "course": course_name,
+            "assignment": name,
+            "points": points,
+            "due_in_days": due_in_days,
+        }
 
-        points = assignment['points_possible']
-        print(due_in_days, name, points, status)
+        if due_in_days > 0:
+            upcoming.append(entry)
+        else:
+            overdue.append(entry)
+
+    # --- Print Upcoming Assignments ---
+    if overdue:
+        print(f"\n{BOLD}{RED}Overdue Assignments{RESET}")
+        print_todo(overdue, overdue=True)
+    else:
+        print(f"{BOLD}\nNo overdue assignments!{RESET}")
+
+    # --- Print Upcoming Assignments ---
+    if upcoming:
+        print(f"\n{BOLD}{CYAN}Upcoming Assignments{RESET}")
+        print_todo(upcoming, overdue=False)
+    else:
+        print(f"\n{BOLD}No upcoming assignments!{RESET}")
+
+
+def print_todo(todo_items, overdue=False):
+    col_width_course = 35
+    col_width_assignment = 40
+
+    line_width = col_width_course + col_width_assignment + 20
+    print("-" * line_width)
+
+    # Header
+    if overdue:
+        header = f"{BOLD}{'Days Late':<10} {'Course':<{col_width_course}} {'Assignment':<{col_width_assignment}} {'Points':>6}{RESET}"
+    else:
+        header = f"{BOLD}{'Due In':<10} {'Course':<{col_width_course}} {'Assignment':<{col_width_assignment}} {'Points':>6}{RESET}"
+    print(header)
+    print("-" * line_width)
+
+    for a in todo_items:
+        # Truncate long names
+        course = (a['course'][:col_width_course - 3] + "...") if len(a['course']) > col_width_course else a['course']
+        assignment = (a['assignment'][:col_width_assignment - 3] + "...") if len(a['assignment']) > col_width_assignment else a['assignment']
+
+        if overdue:
+            days_late = abs(a['due_in_days'])
+            due_text = f"{RED}{days_late} day{'s' if days_late != 1 else ''}{RESET}"
+        else:
+            if a['due_in_days'] == 0:
+                due_text = f"{YELLOW}Today{RESET}"
+            elif a['due_in_days'] == 1:
+                due_text = f"{GREEN}1 day{RESET}"
+            else:
+                due_text = f"{DARK_GREEN}{a['due_in_days']} days{RESET}"
+
+        print(f"{due_text:<19} {course:<{col_width_course}} {assignment:<{col_width_assignment}} {a['points']:>6}")
+
+    print("-" * line_width)
+
+
+def canvas_endpoint(endpoint):
+    url = f"{CANVAS_BASE_URL}{endpoint}"
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Canvas API error {response.status_code}: {response.text[:100]}")
+
+    return response.json()
