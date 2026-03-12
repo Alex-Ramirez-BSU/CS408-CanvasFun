@@ -45,6 +45,7 @@ def main():
     while 1:
         #Get User Input
         user_choice = canvas_menu()
+        print()
 
         match user_choice:
             case 1:
@@ -54,9 +55,14 @@ def main():
                 info = canvas.get_single_course(class_choice)
                 canvas.print_course(info)
             case 3:
+                print(f"---------- Available Courses ----------")
                 for i, course in enumerate(courses, start=1):
                     print(f"{i}. {course['name']}")
+                print(f"---------------------------------------")
                 course_num = int(input("Select a course number to view grades: "))
+                while course_num < 1 or course_num > len(courses):
+                    course_num = int(input("Invalid choice, please try again: "))
+                print()
                 course_id = courses[course_num-1]['id']
                 canvas.course_submissions(course_id)
             case 4:
@@ -69,6 +75,7 @@ def main():
             choice = input("Invalid choice, please try again [y/n]: ")
         if choice.lower() == "n":
             break
+        print()
         continue
 
 if __name__ == "__main__":

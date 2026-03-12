@@ -87,7 +87,7 @@ def course_submissions(course_id):
 
     print(f"\nGrades for Course ID {course_id}")
     print(f"{BOLD}{'Assignment':<40} {'Score':>8} {'Possible':>10} {'Grade':>10}{RESET}")
-    print("-" * 70)
+    print("-" * 75)
 
     for sub in submissions:
         assignment = sub.get("assignment", {})
