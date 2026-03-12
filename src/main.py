@@ -58,7 +58,6 @@ def main():
                 info = canvas.get_single_course(class_choice)
                 canvas.print_course(info)
             case 3:
-                courses = canvas.get_all_active_courses()
                 for i, course in enumerate(courses, start=1):
                     print(f"{i}. {course['name']}")
                 course_num = int(input("Select a course number to view grades: "))
@@ -66,6 +65,8 @@ def main():
                 canvas.course_submissions(course_id)
             case 4:
                 print("---------- Displaying upcoming assignments ----------")
+                # canvas.assignment_tracker(courses)
+                canvas.todo()
             case _:
                 print("Option Not Available")
 
